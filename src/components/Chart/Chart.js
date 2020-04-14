@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
+import classes from './Chart.module.css';
 
 class Chart extends Component {
   state = {};
 
   render() {
-    return <div></div>;
+    return <div className={classes.chartContainer}>Chart will be here</div>;
   }
 }
 

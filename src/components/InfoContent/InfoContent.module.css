@@ -1,0 +1,66 @@
+.content {
+  background-color: #283234;
+  max-height: 35vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  color: #fafafa;
+  box-sizing: border-box;
+}
+
+.column {
+  margin: 1vw 1vh;
+  max-width: 33vw;
+}
+
+h2 {
+  font-family: 'Mosk Bold 700';
+  text-align: left;
+  font-size: 3.3vw;
+}
+
+p {
+  font-family: 'Mosk Light 300';
+  color: #fafafa;
+  text-align: left;
+  font-size: 1.5vh;
+  line-height: 2.2vh;
+}
+
+li {
+  font-family: 'Mosk Light 300';
+  color: #fafafa;
+  text-align: left;
+  font-size: 1.5vh;
+  line-height: 2.2vh;
+}
+
+ul {
+  padding: 0;
+  list-style-type: circle;
+  list-style-position: inside;
+}
+
+.green {
+  color: #008000;
+}
+
+.red {
+  color: #e60000;
+}
+
+.pink {
+  color: #ff8da1;
+}
+
+a:link,
+a:active,
+a:visited {
+  color: #779196;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #778296;
+  text-decoration: underline;
+}

@@ -14,11 +14,6 @@
 
 .App {
   text-align: center;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Mosk Light 300';
-  color: #1e3845;
-  background-color: #fefefe;
+  width: 100vw;
+  height: 100vh;
 }
