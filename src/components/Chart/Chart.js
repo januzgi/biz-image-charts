@@ -1,23 +1,42 @@
 import React, { Component } from 'react';
 import classes from './Chart.module.css';
 import ApexChart from 'react-apexcharts';
+import './Chart.module.css';
 
 class Chart extends Component {
   // Set up the state
   constructor(props) {
     super(props);
 
+    // A time-series graph is a data viz tool that plots data
+    // values at progressive intervals of time. With ApexCharts,
+    //a time-series is created if you provide timestamp values in
+    // the series as shown below and set xaxis.type to ‘datetime’.
+
+    // series: [{
+    //   data: [{
+    //     x: new Date('2018-02-12').getTime(),
+    //     y: 76
+    //   }, {
+    //     x: new Date('2018-02-12').getTime(),
+    //     y: 76
+    //   }]
+    // }],
+    // xaxis: {
+    //   type: 'datetime'
+    // }
+
     this.state = {
       series: [
         {
           name: 'BTC price',
           type: 'line',
-          data: [1.4, 2, 2.5, 1.5, 2.5, 2.8, 3.8, 4.6],
+          data: [5600, 6000, 5842, 7912, 8273, 7329, 6482, 7938],
         },
         {
           name: 'Green count',
           type: 'line',
-          data: [1.1, 3, 3.1, 4, 4.1, 4.9, 6.5, 8.5],
+          data: [21, 32, 36, 44, 54, 49, 53, 25],
         },
         {
           name: 'Red count',
@@ -30,39 +49,68 @@ class Chart extends Component {
           height: 350,
           type: 'line',
           stacked: false,
+          fontFamily: 'Roboto',
+          zoom: {
+            autoScaleYaxis: true,
+          },
+          background: '#fefefe',
         },
         dataLabels: {
           enabled: false,
         },
+        colors: ['#f2a900', '#008000', '#cc0033'],
         stroke: {
-          width: [1, 1, 4],
+          width: [5, 2, 2],
+          curve: 'smooth',
+        },
+        fill: {
+          type: ['solid', 'solid', 'gradient'],
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.5,
+            opacityTo: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: '#cc0033',
+                opacity: 1,
+              },
+              {
+                offset: 100,
+                color: '#ff8da1',
+                opacity: 1,
+              },
+            ],
+          },
         },
         title: {
           text: 'Image color averages and BTC price',
           align: 'left',
-          offsetX: 110,
+          offsetX: 0,
         },
         xaxis: {
           categories: [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
         },
         yaxis: [
           {
+            min: 4000,
+            max: 9000,
             axisTicks: {
               show: true,
             },
             axisBorder: {
               show: true,
-              color: '#008FFB',
+              color: '#f2a900',
             },
             labels: {
               style: {
-                colors: '#008FFB',
+                colors: '#f2a900',
               },
             },
             title: {
-              text: 'Income (thousand crores)',
+              text: 'price $USD',
               style: {
-                color: '#008FFB',
+                color: '#f2a900',
               },
             },
             tooltip: {
@@ -70,46 +118,54 @@ class Chart extends Component {
             },
           },
           {
-            seriesName: 'Income',
+            seriesName: 'Green count',
             opposite: true,
+            min: 20,
+            max: 80,
+            tickAmount: 6,
+            forceNiceScale: true,
             axisTicks: {
               show: true,
             },
             axisBorder: {
               show: true,
-              color: '#00E396',
+              color: '#008000',
             },
             labels: {
               style: {
-                colors: '#00E396',
+                colors: '#008000',
               },
             },
             title: {
-              text: 'Operating Cashflow (thousand crores)',
+              text: 'Green images count',
               style: {
-                color: '#00E396',
+                color: '#008000',
               },
             },
           },
           {
-            seriesName: 'Revenue',
+            seriesName: 'Red/pink count',
             opposite: true,
+            min: 20,
+            max: 80,
+            tickAmount: 6,
+            forceNiceScale: true,
             axisTicks: {
               show: true,
             },
             axisBorder: {
               show: true,
-              color: '#FEB019',
+              color: '#cc0033',
             },
             labels: {
               style: {
-                colors: '#FEB019',
+                colors: '#cc0033',
               },
             },
             title: {
-              text: 'Revenue (thousand crores)',
+              text: 'Red/pink images count',
               style: {
-                color: '#FEB019',
+                color: '#cc0033',
               },
             },
           },
@@ -117,14 +173,21 @@ class Chart extends Component {
         tooltip: {
           fixed: {
             enabled: true,
-            position: 'topLeft', // topRight, topLeft, bottomRight, bottomLeft
-            offsetY: 30,
-            offsetX: 60,
+            position: 'bottomRight',
+            offsetY: -50,
+            offsetX: -130,
           },
         },
         legend: {
-          horizontalAlign: 'left',
-          offsetX: 40,
+          horizontalAlign: 'center',
+          offsetY: 5,
+          height: 20,
+          onItemClick: {
+            toggleDataSeries: false,
+          },
+          onItemHover: {
+            highlightDataSeries: true,
+          },
         },
       },
     };
