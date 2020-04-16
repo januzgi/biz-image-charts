@@ -1,13 +1,27 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+html,
+body,
+div#root > div {
+  width: 100vw;
+  height: 100vh;
+}
+
+@font-face {
+  font-family: 'Mosk Light 300';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Mosk Light 300'), url('Mosk Light 300.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Mosk Bold 700';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Mosk Bold 700'), url('Mosk Bold 700.woff') format('woff');
 }

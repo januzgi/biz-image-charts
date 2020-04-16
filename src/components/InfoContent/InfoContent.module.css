@@ -1,16 +1,13 @@
 .content {
   background-color: #283234;
-  max-height: 35vh;
+  width: 100vw;
   display: flex;
-  flex-direction: row;
-  justify-content: center;
   color: #fafafa;
-  box-sizing: border-box;
 }
 
 .column {
-  margin: 1vw 1vh;
-  max-width: 33vw;
+  flex: 1;
+  margin: 2vh 2vw;
 }
 
 h2 {
@@ -23,22 +20,22 @@ p {
   font-family: 'Mosk Light 300';
   color: #fafafa;
   text-align: left;
-  font-size: 1.5vh;
-  line-height: 2.2vh;
+  font-size: 1.5vw;
+  line-height: 2.2vw;
 }
 
 li {
   font-family: 'Mosk Light 300';
   color: #fafafa;
   text-align: left;
-  font-size: 1.5vh;
-  line-height: 2.2vh;
+  font-size: 1.5vw;
+  line-height: 2.2vw;
 }
 
 ul {
-  padding: 0;
   list-style-type: circle;
   list-style-position: inside;
+  padding: 0;
 }
 
 .green {
@@ -46,7 +43,7 @@ ul {
 }
 
 .red {
-  color: #e60000;
+  color: #cc0033;
 }
 
 .pink {

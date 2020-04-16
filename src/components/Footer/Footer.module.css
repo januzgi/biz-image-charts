@@ -1,12 +1,12 @@
 .footerContent {
   background-color: #1f2329;
-  height: 5vh;
+  height: 5vw;
   width: 100vw;
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-size: 1vh;
+  font-size: 1vw;
   color: #a9a9a9;
   font-family: 'Mosk Light 300';
 }

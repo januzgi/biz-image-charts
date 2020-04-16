@@ -7,7 +7,7 @@ const Footer = () => {
       <div className={classes.itemLeft}>
         <div>
           Powered by{' '}
-          <a href='https://www.coindesk.com/coindesk-api'>Coindesk.</a>
+          <a href='https://www.coindesk.com/price/bitcoin'>Coindesk</a>.
         </div>
       </div>
       <div className={classes.itemRight}>
