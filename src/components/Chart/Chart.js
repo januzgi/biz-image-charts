@@ -1,9 +1,51 @@
 import React, { Component } from 'react';
 import classes from './Chart.module.css';
 import ApexChart from 'react-apexcharts';
-import './Chart.module.css';
+import axios from 'axios';
 
 class Chart extends Component {
+  componentDidMount() {
+    // Get the latest price and images data from the server
+    axios
+      .get('http://199.247.30.86:8000/results.txt')
+      .then((response) => {
+        // Put the results into an array, so it becomes an array of objects
+        let resultsArray = response.data.split('\n');
+
+        // Loop through the results and form valid dataset arrays
+        // If the img count is 0 on either, move to the next datapoint
+
+        // start from here
+        // https://apexcharts.com/javascript-chart-demos/area-charts/datetime-x-axis/
+
+        // Form the date as milliseconds time
+        // timestampsData
+
+        // Form BTC price dataset
+        // priceData
+        // Save the highest and lowest prices to use it for the yaxis scaling with a $500 excess
+        // priceMax + 500, priceMin + 500
+
+        // Form green count dataset
+        // greenImgData
+        // Save the highest green count to use it for the yaxis scaling
+        // gCountMax
+
+        // Form red/pink count dataset
+        // redImgData
+        // Save the highest red count to use it for the yaxis scaling
+        // rCountMax
+
+        // Match green and red counts to determine the highest point in yaxis
+        // imgCountMax is the higher one of gCountMax and rCountMax
+
+        // Set the state after parsing all data
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
   // Set up the state
   constructor(props) {
     super(props);
@@ -27,21 +69,23 @@ class Chart extends Component {
     // }
 
     this.state = {
+      // Initialize axis scales
+      // priceMax, priceMin, gCountMax, rCountMax
       series: [
         {
           name: 'BTC price',
           type: 'line',
-          data: [5600, 6000, 5842, 7912, 8273, 7329, 6482, 7938],
+          data: [5600, 6000, 5842, 7912, 8273, 7329, 6482, 7938], // priceData
         },
         {
           name: 'Green count',
           type: 'line',
-          data: [21, 32, 36, 44, 54, 49, 53, 25],
+          data: [21, 32, 36, 44, 54, 49, 53, 25], // greenImgData
         },
         {
-          name: 'Red count',
+          name: 'Red/pink count',
           type: 'line',
-          data: [20, 29, 37, 36, 44, 45, 50, 58],
+          data: [20, 29, 37, 36, 44, 45, 50, 58], // redImgData
         },
       ],
       options: {
@@ -89,12 +133,13 @@ class Chart extends Component {
           offsetX: 0,
         },
         xaxis: {
-          categories: [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+          // Timestamps for the date data
+          categories: [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], // use timestampsData
         },
         yaxis: [
           {
-            min: 4000,
-            max: 9000,
+            min: 4000, // use priceMin
+            max: 9000, // use priceMax
             axisTicks: {
               show: true,
             },
@@ -120,8 +165,8 @@ class Chart extends Component {
           {
             seriesName: 'Green count',
             opposite: true,
-            min: 20,
-            max: 80,
+            min: 10,
+            max: 80, // use imgCountMax
             tickAmount: 6,
             forceNiceScale: true,
             axisTicks: {
@@ -146,8 +191,8 @@ class Chart extends Component {
           {
             seriesName: 'Red/pink count',
             opposite: true,
-            min: 20,
-            max: 80,
+            min: 10,
+            max: 80, // use imgCountMax
             tickAmount: 6,
             forceNiceScale: true,
             axisTicks: {
