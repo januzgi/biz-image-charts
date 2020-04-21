@@ -5,7 +5,7 @@ const Header = () => {
   return (
     <div>
       <header className={classes.header}>
-        <h1>/biz/ meme color balance</h1>
+        <h1>/biz/ meme color indicator</h1>
       </header>
     </div>
   );

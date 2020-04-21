@@ -5,87 +5,307 @@ import axios from 'axios';
 
 class Chart extends Component {
   componentDidMount() {
+    // Save the highest and lowest price for the yaxis scaling
+    let priceMax = 0;
+    let priceMin = 10000;
+    let priceDataset = [];
+    // Save the first and last dates for x axis scaling
+    let firstDate = 0;
+    let lastDate = 0;
+    // Green count dataset
+    let greenImgDataset = [];
+    let gCountMax = 0;
+    let gCountMin = 100;
+    // Red count dataset
+    let redImgDataset = [];
+    let rCountMax = 0;
+    let rCountMin = 100;
+    // Highest and lowest imgCount
+    let imgCountMax = 0;
+    let imgCountMin = 0;
+
     // Get the latest price and images data from the server
     axios
-      .get('http://199.247.30.86:8000/results.txt')
+      .get('http://199.247.30.86:8000/results.txt', { timeout: 4000 })
       .then((response) => {
-        // Put the results into an array, so it becomes an array of objects
+        // Put the results into an array, so it becomes an array of strings
         let resultsArray = response.data.split('\n');
 
+        // Set firstDate and lastDate
+        let firstUnset = true;
+        let lastUnset = true;
+        let j = 0;
+        // Set the first valid date
+        while (firstUnset) {
+          // Create a datapoint object
+          let datapoint = JSON.parse(resultsArray[j]);
+          // If the img count is 0 on either, move to the next datapoint
+          if (datapoint.gCount === '0' || datapoint.rCount === '0') {
+            j += 1;
+            continue;
+          } else {
+            // If a valid datapoint, grab the timestamp to be the firstDate
+            firstDate = datapoint.timestamp;
+            firstUnset = false;
+          }
+        }
+
+        // -2 because last line of resultsArray is a /newline char
+        j = resultsArray.length - 2;
+        // Set the last valid date
+        while (lastUnset) {
+          // Create a datapoint object
+          let datapoint = JSON.parse(resultsArray[j]);
+          // If the img count is 0 on either, move to the next datapoint
+          if (datapoint.gCount === '0' || datapoint.rCount === '0') {
+            j -= 1;
+            continue;
+          } else {
+            // If a valid datapoint, grab the timestamp to be the lastDate
+            lastDate = datapoint.timestamp;
+            lastUnset = false;
+          }
+        }
+
         // Loop through the results and form valid dataset arrays
-        // If the img count is 0 on either, move to the next datapoint
+        for (let i = 0; i < resultsArray.length - 1; i++) {
+          // Create a datapoint object
+          let datapoint = JSON.parse(resultsArray[i]);
 
-        // start from here
-        // https://apexcharts.com/javascript-chart-demos/area-charts/datetime-x-axis/
+          // If the img count is 0 on either, move to the next datapoint
+          if (datapoint.gCount === '0' || datapoint.rCount === '0') {
+            continue;
+          }
 
-        // Form the date as milliseconds time
-        // timestampsData
+          // Get BTC price
+          // Save the highest and lowest prices to use it for the yaxis scaling with a $500 excess
+          if (+priceMax - +100 < datapoint.price) {
+            priceMax = parseInt(datapoint.price) + +100;
+          }
+          if (+priceMin + +100 > datapoint.price) {
+            priceMin = parseInt(datapoint.price) - +100;
+          }
 
-        // Form BTC price dataset
-        // priceData
-        // Save the highest and lowest prices to use it for the yaxis scaling with a $500 excess
-        // priceMax + 500, priceMin + 500
+          // Add the prices to priceDataset
+          // Take the datapoint's date and price from the data
+          priceDataset.push([
+            parseInt(datapoint.timestamp),
+            parseInt(datapoint.price),
+          ]);
 
-        // Form green count dataset
-        // greenImgData
-        // Save the highest green count to use it for the yaxis scaling
-        // gCountMax
+          // Save the highest and lowest gCount
+          if (gCountMax < datapoint.gCount) {
+            gCountMax = datapoint.gCount;
+          } else if (gCountMin > datapoint.gCount) {
+            gCountMin = datapoint.gCount;
+          }
 
-        // Form red/pink count dataset
-        // redImgData
-        // Save the highest red count to use it for the yaxis scaling
-        // rCountMax
+          // Form green count dataset
+          greenImgDataset.push([
+            parseInt(datapoint.timestamp),
+            parseInt(datapoint.gCount),
+          ]);
 
-        // Match green and red counts to determine the highest point in yaxis
+          // Save the highest rCount
+          if (rCountMax < datapoint.rCount) {
+            rCountMax = datapoint.rCount;
+          } else if (rCountMin > datapoint.rCount) {
+            rCountMin = datapoint.rCount;
+          }
+          // Form red/pink count dataset
+          redImgDataset.push([
+            parseInt(datapoint.timestamp),
+            parseInt(datapoint.rCount),
+          ]);
+        }
+
+        // Match green and red counts to determine the highest point in yaxis, and +10 extra space
         // imgCountMax is the higher one of gCountMax and rCountMax
+        imgCountMax = gCountMax;
+        if (imgCountMax < rCountMax) {
+          imgCountMax = +rCountMax + +10;
+        }
 
-        // Set the state after parsing all data
+        // Match green and red counts to determine the lowest point in yaxis, and -10 extra space
+        // imgCountMin is the lower one of gCountMax and rCountMax
+        imgCountMin = gCountMin;
+        if (imgCountMin > rCountMin) {
+          imgCountMin = +rCountMin - +10;
+        }
+
+        // Update the state with the new series
+        this.updateChartData(priceDataset, greenImgDataset, redImgDataset);
+
+        // Update the state with the new options
+        this.updateChartOptions(
+          parseInt(imgCountMax),
+          parseInt(imgCountMin),
+          priceMin,
+          priceMax,
+          parseInt(firstDate),
+          parseInt(lastDate)
+        );
       })
       .catch((error) => {
         console.log(error);
       });
   }
 
+  // Update each dataset's state
+  updateChartData(priceDataset, greenImgDataset, redImgDataset) {
+    // Update the state with all the new series
+    this.setState({
+      series: [
+        {
+          data: priceDataset,
+        },
+        {
+          data: greenImgDataset,
+        },
+        {
+          data: redImgDataset,
+        },
+      ],
+    });
+  }
+
+  // Update the options according to newest data
+  updateChartOptions(
+    imgCountMax,
+    imgCountMin,
+    priceMin,
+    priceMax,
+    firstDate,
+    lastDate
+  ) {
+    this.setState({
+      options: {
+        xaxis: {
+          // X axis first datapoint date
+          min: firstDate,
+          // X axis last datapoint date
+          max: lastDate,
+        },
+        yaxis: [
+          {
+            seriesName: 'BTC price',
+            min: priceMin,
+            max: priceMax,
+            axisTicks: {
+              show: true,
+            },
+            axisBorder: {
+              show: true,
+              color: '#f2a900',
+            },
+            labels: {
+              style: {
+                colors: '#f2a900',
+              },
+            },
+            title: {
+              text: 'price $USD',
+              style: {
+                color: '#f2a900',
+              },
+            },
+            tooltip: {
+              enabled: true,
+            },
+          },
+          {
+            seriesName: 'Green count',
+            opposite: true,
+            min: parseInt(imgCountMin),
+            max: parseInt(imgCountMax),
+            tickAmount: 6,
+            forceNiceScale: true,
+            axisTicks: {
+              show: true,
+            },
+            axisBorder: {
+              show: true,
+              color: '#008000',
+            },
+            labels: {
+              style: {
+                colors: '#008000',
+              },
+            },
+            title: {
+              text: 'Green images count',
+              style: {
+                color: '#008000',
+              },
+            },
+          },
+          {
+            seriesName: 'Red/pink count',
+            opposite: true,
+            min: parseInt(imgCountMin),
+            max: parseInt(imgCountMax),
+            tickAmount: 6,
+            forceNiceScale: true,
+            axisTicks: {
+              show: true,
+            },
+            axisBorder: {
+              show: true,
+              color: '#cc0033',
+            },
+            labels: {
+              style: {
+                colors: '#cc0033',
+              },
+            },
+            title: {
+              text: 'Red/pink images count',
+              style: {
+                color: '#cc0033',
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    //
+  }
+
   // Set up the state
   constructor(props) {
     super(props);
 
-    // A time-series graph is a data viz tool that plots data
-    // values at progressive intervals of time. With ApexCharts,
-    //a time-series is created if you provide timestamp values in
-    // the series as shown below and set xaxis.type to ‘datetime’.
-
-    // series: [{
-    //   data: [{
-    //     x: new Date('2018-02-12').getTime(),
-    //     y: 76
-    //   }, {
-    //     x: new Date('2018-02-12').getTime(),
-    //     y: 76
-    //   }]
-    // }],
-    // xaxis: {
-    //   type: 'datetime'
-    // }
+    // Bind the chart data updating function
+    this.updateChartData = this.updateChartData.bind(this);
+    // Bind the chart options updating function
+    this.updateChartOptions = this.updateChartOptions.bind(this);
 
     this.state = {
-      // Initialize axis scales
-      // priceMax, priceMin, gCountMax, rCountMax
       series: [
         {
           name: 'BTC price',
           type: 'line',
-          data: [5600, 6000, 5842, 7912, 8273, 7329, 6482, 7938], // priceData
+          data: [
+            [1581120048900, 3500],
+            [1587130048900, 9000],
+          ],
         },
         {
           name: 'Green count',
           type: 'line',
-          data: [21, 32, 36, 44, 54, 49, 53, 25], // greenImgData
+          data: [
+            [1581120048900, 25],
+            [1587130048900, 30],
+          ],
         },
         {
           name: 'Red/pink count',
           type: 'line',
-          data: [20, 29, 37, 36, 44, 45, 50, 58], // redImgData
+          data: [
+            [1581120048900, 20],
+            [1587130048900, 40],
+          ],
         },
       ],
       options: {
@@ -104,42 +324,29 @@ class Chart extends Component {
         },
         colors: ['#f2a900', '#008000', '#cc0033'],
         stroke: {
-          width: [5, 2, 2],
+          width: [5, 3, 3],
           curve: 'smooth',
         },
         fill: {
-          type: ['solid', 'solid', 'gradient'],
-          gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.5,
-            opacityTo: 1,
-            colorStops: [
-              {
-                offset: 0,
-                color: '#cc0033',
-                opacity: 1,
-              },
-              {
-                offset: 100,
-                color: '#ff8da1',
-                opacity: 1,
-              },
-            ],
-          },
+          type: ['solid', 'solid', 'solid'],
         },
         title: {
-          text: 'Image color averages and BTC price',
+          text: 'Image color averages and BTC price (UTC time)',
           align: 'left',
           offsetX: 0,
         },
         xaxis: {
-          // Timestamps for the date data
-          categories: [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], // use timestampsData
+          type: 'datetime',
+          // Starting date of the data in ms
+          min: '1581120048900',
+          // Ending date of the data in ms
+          max: '1587130048900',
         },
         yaxis: [
           {
-            min: 4000, // use priceMin
-            max: 9000, // use priceMax
+            seriesName: 'BTC price',
+            min: '3000',
+            max: '10000',
             axisTicks: {
               show: true,
             },
@@ -166,7 +373,7 @@ class Chart extends Component {
             seriesName: 'Green count',
             opposite: true,
             min: 10,
-            max: 80, // use imgCountMax
+            max: 80,
             tickAmount: 6,
             forceNiceScale: true,
             axisTicks: {
@@ -192,7 +399,7 @@ class Chart extends Component {
             seriesName: 'Red/pink count',
             opposite: true,
             min: 10,
-            max: 80, // use imgCountMax
+            max: 80,
             tickAmount: 6,
             forceNiceScale: true,
             axisTicks: {
@@ -216,11 +423,14 @@ class Chart extends Component {
           },
         ],
         tooltip: {
+          x: {
+            format: 'd.M.yyyy hh:mm',
+          },
           fixed: {
             enabled: true,
             position: 'bottomRight',
-            offsetY: -50,
-            offsetX: -130,
+            offsetY: -40,
+            offsetX: -140,
           },
         },
         legend: {
@@ -238,23 +448,12 @@ class Chart extends Component {
     };
   }
 
-  // Sync state to props from the server
-  static getDerivedStateFromProps(nextProps, prevState) {
-    return null;
-  }
-
-  // Decide whether to continue or not
-  shouldComponentUpdate(nextProps, nextState) {
-    return null;
-  }
-
   render() {
     return (
       <div className={classes.chartContainer}>
         <ApexChart
           options={this.state.options}
           series={this.state.series}
-          type='line'
           height={window.innerHeight - window.innerHeight * 0.2}
         />
       </div>
