@@ -121,15 +121,15 @@ class Chart extends Component {
 
         // Match green and red counts to determine the highest point in yaxis, and +10 extra space
         // imgCountMax is the higher one of gCountMax and rCountMax
-        imgCountMax = gCountMax;
-        if (imgCountMax < rCountMax) {
+        imgCountMax = +gCountMax + +10;
+        if (+imgCountMax < +rCountMax + +10) {
           imgCountMax = +rCountMax + +10;
         }
 
         // Match green and red counts to determine the lowest point in yaxis, and -10 extra space
         // imgCountMin is the lower one of gCountMax and rCountMax
-        imgCountMin = gCountMin;
-        if (imgCountMin > rCountMin) {
+        imgCountMin = +gCountMin - +10;
+        if (+imgCountMin > +rCountMin - +10) {
           imgCountMin = +rCountMin - +10;
         }
 
@@ -180,6 +180,11 @@ class Chart extends Component {
   ) {
     this.setState({
       options: {
+        title: {
+          text: 'Image color averages and BTC price (UTC time)',
+          align: 'left',
+          offsetX: 0,
+        },
         xaxis: {
           // X axis first datapoint date
           min: firstDate,
@@ -218,8 +223,7 @@ class Chart extends Component {
             opposite: true,
             min: parseInt(imgCountMin),
             max: parseInt(imgCountMax),
-            tickAmount: 6,
-            forceNiceScale: true,
+            tickAmount: 4,
             axisTicks: {
               show: true,
             },
@@ -244,8 +248,7 @@ class Chart extends Component {
             opposite: true,
             min: parseInt(imgCountMin),
             max: parseInt(imgCountMax),
-            tickAmount: 6,
-            forceNiceScale: true,
+            tickAmount: 4,
             axisTicks: {
               show: true,
             },
@@ -268,8 +271,6 @@ class Chart extends Component {
         ],
       },
     });
-
-    //
   }
 
   // Set up the state
@@ -314,8 +315,18 @@ class Chart extends Component {
           type: 'line',
           stacked: false,
           fontFamily: 'Roboto',
-          zoom: {
-            autoScaleYaxis: true,
+          animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 500,
+            animateGradually: {
+              enabled: true,
+              delay: 500,
+            },
+            dynamicAnimation: {
+              enabled: true,
+              speed: 500,
+            },
           },
           background: '#fefefe',
         },
@@ -331,7 +342,7 @@ class Chart extends Component {
           type: ['solid', 'solid', 'solid'],
         },
         title: {
-          text: 'Image color averages and BTC price (UTC time)',
+          text: 'SERVER OFFLINE',
           align: 'left',
           offsetX: 0,
         },

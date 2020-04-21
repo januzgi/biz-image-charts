@@ -50,6 +50,18 @@ ul {
   color: #ff8da1;
 }
 
+.BTC {
+  color: #f2a900;
+}
+
+.greenLine {
+  color: #008000;
+}
+
+.redLine {
+  color: #cc0033;
+}
+
 a:link,
 a:active,
 a:visited {
