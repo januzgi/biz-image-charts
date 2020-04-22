@@ -181,7 +181,7 @@ class Chart extends Component {
     this.setState({
       options: {
         title: {
-          text: 'Image color averages and BTC price (UTC time)',
+          text: 'Image color averages and BTC price (timezone: GMT+3/UTC+3)',
           align: 'left',
           offsetX: 0,
         },
@@ -435,7 +435,7 @@ class Chart extends Component {
         ],
         tooltip: {
           x: {
-            format: 'd.M.yyyy hh:mm',
+            format: 'd.M.yyyy H:mm',
           },
           fixed: {
             enabled: true,

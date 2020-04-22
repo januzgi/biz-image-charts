@@ -33,7 +33,7 @@ const InfoContent = () => {
             <li>
               <span className={classes.BTC}>BTC/USD </span>
               price from{' '}
-              <a href='https://www.coindesk.com/coindesk-api'>Coindesk API</a>
+              <a href='https://blockchain.info/ticker'>Blockchain.info</a>
             </li>
             <li>
               <span className={classes.greenLine}>Green images count </span>
