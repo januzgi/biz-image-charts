@@ -286,7 +286,7 @@ class Chart extends Component {
       series: [
         {
           name: 'BTC price',
-          type: 'line',
+          type: 'area',
           data: [
             [1581120048900, 3500],
             [1587130048900, 9000],
@@ -335,11 +335,19 @@ class Chart extends Component {
         },
         colors: ['#f2a900', '#008000', '#cc0033'],
         stroke: {
-          width: [5, 3, 3],
+          width: [2, 4, 4],
           curve: 'smooth',
         },
         fill: {
-          type: ['solid', 'solid', 'solid'],
+          type: ['gradient', 'solid', 'solid'],
+          gradient: {
+            shade: 'light',
+            type: 'vertical',
+            shadeIntensity: 1,
+            opacityFrom: 1,
+            opacityTo: 0.2,
+            stops: [0, 100],
+          },
         },
         title: {
           text: 'SERVER OFFLINE',
