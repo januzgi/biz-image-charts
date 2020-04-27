@@ -1,8 +1,38 @@
-.chartContainer {
+.ChartContainer {
   padding: 1vh 1vw;
   background-color: #fefefe;
+  font-family: 'Mosk Light 300';
 }
 
 .tooltip {
   padding: 1vh 1vw;
+}
+
+.Toolbar {
+  text-align: right;
+}
+
+button {
+  font-weight: bold;
+  margin: 20px 5px;
+  padding: 5px 20px;
+  border-radius: 5px;
+  -webkit-box-shadow: 1px 1px 2px 0px #cecece;
+  -moz-box-shadow: 1px 1px 2px 0px #cecece;
+  box-shadow: 1px 1px 2px 0px #cecece;
+  background-color: #fefefe;
+}
+
+button:disabled {
+  color: #cecece;
+  background-color: #408ff3;
+  font-weight: normal;
+}
+
+button:hover:enabled {
+  background-color: #408ff3;
+  color: #fefefe;
+  -webkit-box-shadow: 0px;
+  -moz-box-shadow: 0px;
+  box-shadow: 0px;
 }

@@ -2,6 +2,13 @@ import React, { Component } from 'react';
 import classes from './Chart.module.css';
 import ApexChart from 'react-apexcharts';
 import axios from 'axios';
+import ToolbarLineChart from './Toolbar/ToolbarLineChart';
+import ToolbarCandleChart from './Toolbar/ToolbarCandleChart';
+
+const ApexCharts = window.ApexCharts;
+const chartTitleFontSize = window.innerWidth * 0.015;
+const chartSubtitleFontSize = window.innerHeight * 0.0125;
+let dataOHLC = [];
 
 class Chart extends Component {
   componentDidMount() {
@@ -151,6 +158,15 @@ class Chart extends Component {
       });
   }
 
+  // Toggle between candlestick and line img data modes
+  toggleImgDataMode = () => {
+    if (this.state.imgDataMode === 'line') {
+      this.setState({ imgDataMode: 'candlestick' });
+    } else {
+      this.setState({ imgDataMode: 'line' });
+    }
+  };
+
   // Update each dataset's state
   updateChartData(priceDataset, greenImgDataset, redImgDataset) {
     // Update the state with all the new series
@@ -182,6 +198,9 @@ class Chart extends Component {
       options: {
         title: {
           text: 'Image color averages and BTC price (timezone: GMT+3/UTC+3)',
+          style: {
+            fontSize: chartTitleFontSize,
+          },
           align: 'left',
           offsetX: 0,
         },
@@ -211,6 +230,7 @@ class Chart extends Component {
             title: {
               text: 'price $USD',
               style: {
+                fontSize: chartSubtitleFontSize,
                 color: '#f2a900',
               },
             },
@@ -239,6 +259,7 @@ class Chart extends Component {
             title: {
               text: 'Green images count',
               style: {
+                fontSize: chartSubtitleFontSize,
                 color: '#008000',
               },
             },
@@ -264,6 +285,7 @@ class Chart extends Component {
             title: {
               text: 'Red/pink images count',
               style: {
+                fontSize: chartSubtitleFontSize,
                 color: '#cc0033',
               },
             },
@@ -271,6 +293,94 @@ class Chart extends Component {
         ],
       },
     });
+  }
+
+  // Update chart to candlesticks using the given timeframe
+  updateToCandlesticks(timeframe) {
+    // Timeframes 1h, 4h, 12h, 1D
+
+    // https://apexcharts.com/docs/chart-types/candlestick/
+
+    // Calculate the existing data in timestamp, O,H,L,C format
+    // if it isn't already calculated
+    if (dataOHLC.length !== 0) {
+      console.log('Calculating OHLC data...');
+      this.calculateOHLC().then((response) => {
+        // [0] is BTC price data
+        // [1] is green img data
+        // [2] is red/pink img data
+
+        console.log(response);
+
+        // Update the chart state with the OHLC data
+        // and update the imgDataMode
+
+        // this.setState({
+        // imgDataMode: 'candlestick',
+        //   series: [
+        //     {
+        //       // BTC price data with the timestamp being the close
+        //       // and price being the average of the chosen timeframe
+        //       // [Timestamp, C_Average]
+        //       name: 'BTC price',
+        //       type: 'area',
+        //       data: [
+        //         [1538778600000, 6604],
+        //         [1538782200000, 6900],
+        //       ],
+        //     },
+        //     {
+        //       // [Timestamp, O, H, L, C]
+        //       name: 'Green count',
+        //       type: 'candlestick',
+        //       data: [
+        //         [1538778600000, 55, 60, 45, 49],
+        //         [1538782200000, 49, 54, 23, 25],
+        //       ],
+        //     },
+        //     {
+        //       // [Timestamp, O, H, L, C]
+        //       name: 'Red/pink count',
+        //       type: 'candlestick',
+        //       data: [
+        //         [1538778600000, 33, 40, 30, 38],
+        //         [1538782200000, 38, 70, 38, 68],
+        //       ],
+        //     },
+        //   ],
+        //   options: {
+        //     plotOptions: {
+        //       candlestick: {
+        //         colors: {
+        //           upward: '#008000',
+        //           downward: '#cc0033',
+        //         },
+        //         wick: {
+        //           useFillColor: true,
+        //         },
+        //       },
+        //     },
+        //   },
+        // });
+      });
+    }
+  }
+
+  // Calculate OHLC from existing datapoints
+  calculateOHLC() {
+    // Get data from state
+
+    let dataInOHLC = [];
+
+    // Save the data to global dataOHLC so it won't be recalculated later
+    dataOHLC = dataInOHLC;
+
+    // [0] is BTC price data
+    // [1] is green img data
+    // [2] is red/pink img data
+
+    // Return the OHLC data
+    return dataInOHLC;
   }
 
   // Set up the state
@@ -281,6 +391,10 @@ class Chart extends Component {
     this.updateChartData = this.updateChartData.bind(this);
     // Bind the chart options updating function
     this.updateChartOptions = this.updateChartOptions.bind(this);
+    // Bind candlestick update function
+    this.updateToCandlesticks = this.updateToCandlesticks.bind(this);
+    // Bind the OHLC data calculation function
+    this.calculateOHLC = this.calculateOHLC.bind(this);
 
     this.state = {
       series: [
@@ -311,8 +425,8 @@ class Chart extends Component {
       ],
       options: {
         chart: {
+          id: 'chart',
           height: 350,
-          type: 'line',
           stacked: false,
           fontFamily: 'Roboto',
           animations: {
@@ -351,6 +465,7 @@ class Chart extends Component {
         },
         title: {
           text: 'SERVER OFFLINE',
+          fontSize: '20px',
           align: 'left',
           offsetX: 0,
         },
@@ -464,12 +579,84 @@ class Chart extends Component {
           },
         },
       },
+      selection: 'all',
+      imgDataMode: 'line',
+      candlestickTimeframe: 'candlestick_one_hour',
     };
   }
 
+  // Update line chart timeframe
+  updateZoomData = (timeline) => {
+    this.setState({
+      selection: timeline,
+    });
+
+    switch (timeline) {
+      case 'all':
+        ApexCharts.exec(
+          'chart',
+          'zoomX',
+          this.state.options.xaxis.min,
+          this.state.options.xaxis.max
+        );
+        break;
+      case 'one_day':
+        ApexCharts.exec(
+          'chart',
+          'zoomX',
+          this.state.options.xaxis.min,
+          this.state.options.xaxis.min + 86400000
+        );
+        break;
+      // Include 'one_week' 604800000, 'one_month' 2419200000 and 'ytd' 29030400000 later on
+      default:
+    }
+  };
+
+  // Update candlestick chart timeframe
+  updateCandlestickZoomData = (timeframe) => {
+    this.setState({
+      candlestickTimeframe: timeframe,
+    });
+
+    switch (timeframe) {
+      case 'candlestick_one_hour':
+        this.updateToCandlesticks(timeframe);
+        break;
+      case 'candlestick_four_hours':
+        this.updateToCandlesticks(timeframe);
+        break;
+      case 'candlestick_twelve_hours':
+        this.updateToCandlesticks(timeframe);
+        break;
+      case 'candlestick_one_day':
+        this.updateToCandlesticks(timeframe);
+        break;
+      // Include 'candlestick_one_week' later on
+      default:
+    }
+  };
+
   render() {
     return (
-      <div className={classes.chartContainer}>
+      <div className={classes.ChartContainer}>
+        <div className={classes.Toolbar}>
+          <button style={{ outline: 'none' }} onClick={this.toggleImgDataMode}>
+            Toggle candlestick / line
+          </button>
+        </div>
+        {/* Check imgDataMode and draw line or candle chart toolbar accordingly */}
+        {this.state.imgDataMode === 'candlestick' ? (
+          <ToolbarCandleChart
+            disabled={this.state.candlestickTimeframe}
+            clicked={this.updateCandlestickZoomData}
+          />
+        ) : (
+          <ToolbarLineChart
+            disabled={this.state.selection}
+            clicked={this.updateZoomData}
+          />
+        )}
         <ApexChart
           options={this.state.options}
           series={this.state.series}
