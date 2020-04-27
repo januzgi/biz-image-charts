@@ -8,7 +8,7 @@ import ToolbarCandleChart from './Toolbar/ToolbarCandleChart';
 const ApexCharts = window.ApexCharts;
 const chartTitleFontSize = window.innerWidth * 0.015;
 const chartSubtitleFontSize = window.innerHeight * 0.0125;
-let dataOHLC = [];
+let dataOHLC = { '1h': [], '4h': [], '12h': [], '1D': [] };
 
 class Chart extends Component {
   componentDidMount() {
@@ -168,7 +168,7 @@ class Chart extends Component {
   };
 
   // Update each dataset's state
-  updateChartData(priceDataset, greenImgDataset, redImgDataset) {
+  updateChartData = (priceDataset, greenImgDataset, redImgDataset) => {
     // Update the state with all the new series
     this.setState({
       series: [
@@ -183,17 +183,17 @@ class Chart extends Component {
         },
       ],
     });
-  }
+  };
 
   // Update the options according to newest data
-  updateChartOptions(
+  updateChartOptions = (
     imgCountMax,
     imgCountMin,
     priceMin,
     priceMax,
     firstDate,
     lastDate
-  ) {
+  ) => {
     this.setState({
       options: {
         title: {
@@ -293,108 +293,11 @@ class Chart extends Component {
         ],
       },
     });
-  }
-
-  // Update chart to candlesticks using the given timeframe
-  updateToCandlesticks(timeframe) {
-    // Timeframes 1h, 4h, 12h, 1D
-
-    // https://apexcharts.com/docs/chart-types/candlestick/
-
-    // Calculate the existing data in timestamp, O,H,L,C format
-    // if it isn't already calculated
-    if (dataOHLC.length !== 0) {
-      console.log('Calculating OHLC data...');
-      this.calculateOHLC().then((response) => {
-        // [0] is BTC price data
-        // [1] is green img data
-        // [2] is red/pink img data
-
-        console.log(response);
-
-        // Update the chart state with the OHLC data
-        // and update the imgDataMode
-
-        // this.setState({
-        // imgDataMode: 'candlestick',
-        //   series: [
-        //     {
-        //       // BTC price data with the timestamp being the close
-        //       // and price being the average of the chosen timeframe
-        //       // [Timestamp, C_Average]
-        //       name: 'BTC price',
-        //       type: 'area',
-        //       data: [
-        //         [1538778600000, 6604],
-        //         [1538782200000, 6900],
-        //       ],
-        //     },
-        //     {
-        //       // [Timestamp, O, H, L, C]
-        //       name: 'Green count',
-        //       type: 'candlestick',
-        //       data: [
-        //         [1538778600000, 55, 60, 45, 49],
-        //         [1538782200000, 49, 54, 23, 25],
-        //       ],
-        //     },
-        //     {
-        //       // [Timestamp, O, H, L, C]
-        //       name: 'Red/pink count',
-        //       type: 'candlestick',
-        //       data: [
-        //         [1538778600000, 33, 40, 30, 38],
-        //         [1538782200000, 38, 70, 38, 68],
-        //       ],
-        //     },
-        //   ],
-        //   options: {
-        //     plotOptions: {
-        //       candlestick: {
-        //         colors: {
-        //           upward: '#008000',
-        //           downward: '#cc0033',
-        //         },
-        //         wick: {
-        //           useFillColor: true,
-        //         },
-        //       },
-        //     },
-        //   },
-        // });
-      });
-    }
-  }
-
-  // Calculate OHLC from existing datapoints
-  calculateOHLC() {
-    // Get data from state
-
-    let dataInOHLC = [];
-
-    // Save the data to global dataOHLC so it won't be recalculated later
-    dataOHLC = dataInOHLC;
-
-    // [0] is BTC price data
-    // [1] is green img data
-    // [2] is red/pink img data
-
-    // Return the OHLC data
-    return dataInOHLC;
-  }
+  };
 
   // Set up the state
   constructor(props) {
     super(props);
-
-    // Bind the chart data updating function
-    this.updateChartData = this.updateChartData.bind(this);
-    // Bind the chart options updating function
-    this.updateChartOptions = this.updateChartOptions.bind(this);
-    // Bind candlestick update function
-    this.updateToCandlesticks = this.updateToCandlesticks.bind(this);
-    // Bind the OHLC data calculation function
-    this.calculateOHLC = this.calculateOHLC.bind(this);
 
     this.state = {
       series: [
@@ -613,28 +516,148 @@ class Chart extends Component {
     }
   };
 
+  // Calculate OHLC from existing datapoints
+  // https://apexcharts.com/docs/chart-types/candlestick/
+  calculateOHLC = (timeframe) => {
+    // Get datasets from state
+    let oldBTCPriceData = this.state.series[0].data;
+    let oldGreenImgData = this.state.series[1].data;
+    let oldRedImgData = this.state.series[2].data;
+
+    // Calculate the existing data in timestamp, O,H,L,C format
+    switch (timeframe) {
+      case 'candlestick_one_hour':
+        // First calculate the BTC price data
+        // With one hour we need to go through 12 datapoints, last datapoint giving the timestamp
+        console.log('oldBTCPriceData: ', oldBTCPriceData);
+        for (let i = 0; i < oldBTCPriceData.length; i++) {}
+
+        console.log(timeframe);
+        console.log('oldGreenImgData: ', oldGreenImgData);
+        console.log('oldRedImgData: ', oldRedImgData);
+        break;
+      case 'candlestick_four_hours':
+        console.log(timeframe);
+        break;
+      case 'candlestick_twelve_hours':
+        console.log(timeframe);
+        break;
+      case 'candlestick_one_day':
+        console.log(timeframe);
+        break;
+
+      // Include 'candlestick_one_week' later on
+      default:
+    }
+
+    let dataInOHLC = [];
+
+    // Save the data to global dataOHLC so it won't be recalculated later
+    // dataOHLC = dataInOHLC;
+
+    // [0] is BTC price data
+    // [1] is green img data
+    // [2] is red/pink img data
+
+    // Return the OHLC data
+    return dataInOHLC;
+  };
+
   // Update candlestick chart timeframe
   updateCandlestickZoomData = (timeframe) => {
-    this.setState({
-      candlestickTimeframe: timeframe,
-    });
+    let newOHLCData = [];
 
     switch (timeframe) {
       case 'candlestick_one_hour':
-        this.updateToCandlesticks(timeframe);
+        // Check if the data isn't already calculated
+        if (dataOHLC['1h'].length === 0) {
+          // Calculate missing timeframe data
+          newOHLCData = this.calculateOHLC(timeframe);
+        }
         break;
       case 'candlestick_four_hours':
-        this.updateToCandlesticks(timeframe);
+        // Check if the data isn't already calculated
+        if (dataOHLC['4h'].length === 0) {
+          // Calculate missing timeframe data
+          newOHLCData = this.calculateOHLC(timeframe);
+        }
         break;
       case 'candlestick_twelve_hours':
-        this.updateToCandlesticks(timeframe);
+        // Check if the data isn't already calculated
+        if (dataOHLC['12h'].length === 0) {
+          // Calculate missing timeframe data
+          newOHLCData = this.calculateOHLC(timeframe);
+        }
         break;
       case 'candlestick_one_day':
-        this.updateToCandlesticks(timeframe);
+        // Check if the data isn't already calculated
+        if (dataOHLC['1D'].length === 0) {
+          // Calculate missing timeframe data
+          newOHLCData = this.calculateOHLC(timeframe);
+        }
         break;
       // Include 'candlestick_one_week' later on
       default:
     }
+
+    console.log(newOHLCData);
+
+    this.setState({
+      candlestickTimeframe: timeframe,
+      imgDataMode: 'candlestick',
+    });
+
+    // Update the chart state with newOHLCData
+    // and update the imgDataMode and candlestickTimeframe
+
+    // this.setState({
+    // candlestickTimeframe: timeframe,
+    // imgDataMode: 'candlestick',
+    //   series: [
+    //     {
+    //       // BTC price data with the timestamp being the close
+    //       // and price being the average of the chosen timeframe
+    //       // [Timestamp, C_Average]
+    //       name: 'BTC price',
+    //       type: 'area',
+    //       data: [
+    //         [1538778600000, 6604],
+    //         [1538782200000, 6900],
+    //       ],
+    //     },
+    //     {
+    //       // [Timestamp, O, H, L, C]
+    //       name: 'Green count',
+    //       type: 'candlestick',
+    //       data: [
+    //         [1538778600000, 55, 60, 45, 49],
+    //         [1538782200000, 49, 54, 23, 25],
+    //       ],
+    //     },
+    //     {
+    //       // [Timestamp, O, H, L, C]
+    //       name: 'Red/pink count',
+    //       type: 'candlestick',
+    //       data: [
+    //         [1538778600000, 33, 40, 30, 38],
+    //         [1538782200000, 38, 70, 38, 68],
+    //       ],
+    //     },
+    //   ],
+    //   options: {
+    //     plotOptions: {
+    //       candlestick: {
+    //         colors: {
+    //           upward: '#008000',
+    //           downward: '#cc0033',
+    //         },
+    //         wick: {
+    //           useFillColor: true,
+    //         },
+    //       },
+    //     },
+    //   },
+    // });
   };
 
   render() {
