@@ -3,12 +3,12 @@ import classes from '../Chart.module.css';
 
 // Initialize the controls
 const controls = [
-  { label: '1h', type: 'candlestick_one_hour' },
-  { label: '4h', type: 'candlestick_four_hours' },
-  { label: '12h', type: 'candlestick_twelve_hours' },
-  { label: '1D', type: 'candlestick_one_day' },
+  { type: '1h' },
+  { type: '4h' },
+  { type: '12h' },
+  { type: '1D' },
 ];
-// Add 'candlestick_one_week' later on
+// Add '1W' later on
 
 const toolbarCandleChart = (props) => {
   return (
@@ -19,7 +19,7 @@ const toolbarCandleChart = (props) => {
           onClick={() => props.clicked(ctrl.type)}
           disabled={props.disabled === ctrl.type ? 'disabled' : ''}
         >
-          {ctrl.label}
+          {ctrl.type}
         </button>
       ))}
     </div>
