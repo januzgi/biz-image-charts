@@ -9,6 +9,15 @@ const ApexCharts = window.ApexCharts;
 const chartTitleFontSize = window.innerWidth * 0.015;
 const chartSubtitleFontSize = window.innerHeight * 0.0125;
 let candlestickData = { '1h': [], '4h': [], '12h': [], '1D': [] };
+let lineData = {
+  '5m': [],
+  '15m': [],
+  '30m': [],
+  '1h': [],
+  '2h': [],
+  '4h': [],
+  '12h': [],
+};
 
 class Chart extends Component {
   // Set up the state
@@ -51,14 +60,13 @@ class Chart extends Component {
           animations: {
             enabled: true,
             easing: 'easeinout',
-            speed: 500,
+            speed: 2000,
             animateGradually: {
-              enabled: true,
-              delay: 500,
+              enabled: false,
             },
             dynamicAnimation: {
               enabled: true,
-              speed: 500,
+              speed: 2000,
             },
           },
           background: '#fefefe',
@@ -90,9 +98,7 @@ class Chart extends Component {
         },
         xaxis: {
           type: 'datetime',
-          // Starting date of the data in ms
           min: '1581120048900',
-          // Ending date of the data in ms
           max: '1587130048900',
         },
         yaxis: [
@@ -199,7 +205,8 @@ class Chart extends Component {
         },
       },
       chartDrawingMode: 'line',
-      lineTimeframe: 'all',
+      lineTimeframe: 'past_week',
+      lineDataDensity: 'data_5m',
       candlestickTimeframe: '1h',
       disableToggle: true,
     };
@@ -232,7 +239,7 @@ class Chart extends Component {
         // Put the results into an array, so it becomes an array of strings
         let resultsArray = response.data.split('\n');
 
-        // Set firstDate and lastDate
+        // // Set firstDate and lastDate
         let firstUnset = true;
         let lastUnset = true;
         let j = 0;
@@ -334,8 +341,15 @@ class Chart extends Component {
           imgCountMin = +rCountMin - +10;
         }
 
+        // Calculate and save datasets for line chart's different data densities
+        this.calculateDataDensity(priceDataset, greenImgDataset, redImgDataset);
+
         // Update the state with the new data
         this.updateLineSeries(priceDataset, greenImgDataset, redImgDataset);
+
+        // Save the datasets as original ones which will be used
+        // later on to calculate the candlestick data
+        lineData['5m'] = [priceDataset, greenImgDataset, redImgDataset];
 
         // Update the state with the new options
         this.updateLineOptions(
@@ -346,6 +360,9 @@ class Chart extends Component {
           parseInt(firstDate),
           parseInt(lastDate)
         );
+
+        // Set the default line timeframe to be past_week
+        this.updateLineZoom('past_week');
       })
       .catch((error) => {
         console.log(error);
@@ -357,8 +374,9 @@ class Chart extends Component {
     // Calculate the new data in [lastDatapointTimestamp, priceAverage] format
     let priceDataAverages = [];
 
-    // Get price dataset from state
-    let oldBTCPriceData = this.state.series[0].data;
+    // Get original price dataset
+    let oldBTCPriceData = lineData['5m'][0];
+
     // Initialize avgPrice and timestamp variables
     let avgPrice = 0;
     let timestamp = 0;
@@ -446,55 +464,123 @@ class Chart extends Component {
 
   // Receives the amount of 5m datapoints to be bundled together as dataRange
   calculateImgOHLC = (dataRange) => {
-    // Get datasets from state
-    let oldGreenImgData = this.state.series[1].data;
-    let oldRedImgData = this.state.series[2].data;
+    // Get the original datasets
+    let originalGreenImgData = lineData['5m'][1];
+    let originalRedImgData = lineData['5m'][2];
+
     // [0] for green and [1] for red/pink data
     let imgDataInOHLC = [[], []];
 
     // Both datasets exact same length so use a joint function
-    imgDataInOHLC[0] = this.imgDataOHLC(oldGreenImgData, dataRange);
-    imgDataInOHLC[1] = this.imgDataOHLC(oldRedImgData, dataRange);
+    imgDataInOHLC[0] = this.imgDataOHLC(originalGreenImgData, dataRange);
+    imgDataInOHLC[1] = this.imgDataOHLC(originalRedImgData, dataRange);
 
     return imgDataInOHLC;
   };
 
+  // Calculates the original data (5m) with 15m, 30m etc. data density
+  calculateDataDensity = (priceDataset, greenImgDataset, redImgDataset) => {
+    // Put datasets into array for more readable looping
+    let datasets = [priceDataset, greenImgDataset, redImgDataset];
+
+    // Calculate all datapoint densities as defined in ToolbarLineChart
+    // Except for '5m' which is calculated at startup
+    // The value is the increment, how many 5m datapoints need to be calculated for this density
+    let datapointControls = {
+      '12h': 144,
+      '4h': 48,
+      '2h': 24,
+      '1h': 12,
+      '30m': 6,
+      '15m': 3,
+    };
+
+    // Initialize variables
+    let average = 0;
+    let timestamp = 0;
+    // Loop through each dataset
+    for (let i = 0; i < datasets.length; i++) {
+      // Loop through and calculate each data density selection
+      for (var key in datapointControls) {
+        if (datapointControls.hasOwnProperty(key)) {
+          // Temp array for each dataset
+          let tempArray = [];
+          // Loop through all datapoints of the dataset
+          for (
+            let j = 0;
+            j < datasets[i].length - datapointControls[key] - 1;
+            j = j + datapointControls[key]
+          ) {
+            // Loop through as many datapoints as required for the chosen data density
+            for (let k = 0; k < datapointControls[key]; k++) {
+              average = average + datasets[i][j + k][1];
+            }
+
+            // Take the last timestamp as the timestamp of these new datapoints
+            timestamp = datasets[i][j + 2][0];
+            // Count the average value of the datapoints
+            average = parseInt(average / datapointControls[key]);
+            // Push the data into temp array
+            tempArray.push([timestamp, average]);
+
+            // Reset variables
+            average = 0;
+            timestamp = 0;
+          }
+          // Add the calculated values to global object
+          lineData[key].push(tempArray);
+        }
+      }
+    }
+  };
+
   // Toggle between candlestick and line img data modes
   toggleChartMode = () => {
-    console.log('State in toggleChartMode()');
-    console.log(this.state);
-
     if (this.state.chartDrawingMode === 'line') {
       // Set the chart to use candlesticks
       this.updateCandlestickZoom(this.state.candlestickTimeframe);
     } else {
-      // Set the data series with line data
-      this.updateLineSeries(this.state.lineTimeframe);
-      // Set the state options with line data
-      this.updateLineOptions(this.state.lineTimeframe);
-    }
+      // Using the default 'all' with '5m'
+      this.setState({ lineTimeframe: 'all', lineDataDensity: 'data_5m' });
 
-    console.log('State in toggleChartMode() after changes');
-    console.log(this.state);
+      // Set the data series with saved line series
+      this.updateLineSeries(
+        this.state.savedLineSeries[0],
+        this.state.savedLineSeries[1],
+        this.state.savedLineSeries[2]
+      );
+
+      // Set the state options using the saved line options
+      this.updateLineOptions(
+        this.state.savedLineOptions[0],
+        this.state.savedLineOptions[1],
+        this.state.savedLineOptions[2],
+        this.state.savedLineOptions[3],
+        this.state.savedLineOptions[4],
+        this.state.savedLineOptions[5]
+      );
+    }
   };
 
   // Update the line chart dataseries
   updateLineSeries = (priceSerie, greenSerie, redSerie) => {
-    console.log('updateLineSeries()');
-
     this.setState({
-      // Data has been fetched so enable toggling button
-      disableToggle: false,
       // For later use save the dataseries in state too
-      savedSeries: [priceSerie, greenSerie, redSerie],
+      savedLineSeries: [priceSerie, greenSerie, redSerie],
       series: [
         {
+          name: 'BTC price',
+          type: 'area',
           data: priceSerie,
         },
         {
+          name: 'Green count',
+          type: 'line',
           data: greenSerie,
         },
         {
+          name: 'Red/pink count',
+          type: 'line',
           data: redSerie,
         },
       ],
@@ -510,11 +596,51 @@ class Chart extends Component {
     firstDate,
     lastDate
   ) => {
-    console.log('updateLineOptions()');
-
     this.setState({
+      // Data has been fetched so enable toggling button
+      disableToggle: false,
+      // Update drawing mode to line
       chartDrawingMode: 'line',
       options: {
+        chart: {
+          id: 'chart',
+          height: 350,
+          stacked: false,
+          fontFamily: 'Roboto',
+          animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 500,
+            animateGradually: {
+              enabled: true,
+              delay: 500,
+            },
+            dynamicAnimation: {
+              enabled: true,
+              speed: 500,
+            },
+          },
+          background: '#fefefe',
+        },
+        dataLabels: {
+          enabled: false,
+        },
+        colors: ['#f2a900', '#008000', '#cc0033'],
+        stroke: {
+          width: [2, 4, 4],
+          curve: 'smooth',
+        },
+        fill: {
+          type: ['gradient', 'solid', 'solid'],
+          gradient: {
+            shade: 'light',
+            type: 'vertical',
+            shadeIntensity: 1,
+            opacityFrom: 1,
+            opacityTo: 0.2,
+            stops: [0, 100],
+          },
+        },
         title: {
           text: 'Image color averages and BTC price (timezone: GMT+3/UTC+3)',
           style: {
@@ -524,6 +650,7 @@ class Chart extends Component {
           offsetX: 0,
         },
         xaxis: {
+          type: 'datetime',
           // X axis first datapoint date
           min: firstDate,
           // X axis last datapoint date
@@ -610,20 +737,48 @@ class Chart extends Component {
             },
           },
         ],
+        tooltip: {
+          x: {
+            format: 'd.M.yyyy H:mm',
+          },
+          fixed: {
+            enabled: true,
+            position: 'bottomRight',
+            offsetY: -40,
+            offsetX: -140,
+          },
+        },
+        legend: {
+          horizontalAlign: 'center',
+          offsetY: 5,
+          height: 20,
+          onItemClick: {
+            toggleDataSeries: false,
+          },
+          onItemHover: {
+            highlightDataSeries: true,
+          },
+        },
       },
     });
   };
 
   // Update line chart timeframe
   updateLineZoom = (timeframe) => {
-    console.log('updateLineZoom()');
-
     // Update to the selected timeframe
     this.setState({
       lineTimeframe: timeframe,
     });
 
     switch (timeframe) {
+      case 'past_week':
+        ApexCharts.exec(
+          'chart',
+          'zoomX',
+          this.state.options.xaxis.max - 604800000,
+          this.state.options.xaxis.max
+        );
+        break;
       case 'all':
         ApexCharts.exec(
           'chart',
@@ -645,19 +800,88 @@ class Chart extends Component {
     }
   };
 
-  // https://apexcharts.com/react-chart-demos/candlestick-charts/basic/
+  // Update line chart datapoint density by chosen timeframe
+  updateLineDataDensity = (timeframe) => {
+    let priceSerie = [];
+    let greenSerie = [];
+    let redSerie = [];
+
+    switch (timeframe) {
+      case 'data_5m':
+        priceSerie = lineData['5m'][0];
+        greenSerie = lineData['5m'][1];
+        redSerie = lineData['5m'][2];
+        break;
+
+      case 'data_15m':
+        priceSerie = lineData['15m'][0];
+        greenSerie = lineData['15m'][1];
+        redSerie = lineData['15m'][2];
+        break;
+
+      case 'data_30m':
+        priceSerie = lineData['30m'][0];
+        greenSerie = lineData['30m'][1];
+        redSerie = lineData['30m'][2];
+        break;
+
+      case 'data_1h':
+        priceSerie = lineData['1h'][0];
+        greenSerie = lineData['1h'][1];
+        redSerie = lineData['1h'][2];
+        break;
+
+      case 'data_2h':
+        priceSerie = lineData['2h'][0];
+        greenSerie = lineData['2h'][1];
+        redSerie = lineData['2h'][2];
+        break;
+
+      case 'data_4h':
+        priceSerie = lineData['4h'][0];
+        greenSerie = lineData['4h'][1];
+        redSerie = lineData['4h'][2];
+        break;
+
+      case 'data_12h':
+        priceSerie = lineData['12h'][0];
+        greenSerie = lineData['12h'][1];
+        redSerie = lineData['12h'][2];
+        break;
+      default:
+    }
+
+    // Redraw the chart and re-animate
+    ApexCharts.exec(
+      'chart',
+      'updateSeries',
+      [
+        {
+          data: priceSerie,
+        },
+        {
+          data: greenSerie,
+        },
+        {
+          data: redSerie,
+        },
+      ],
+      true
+    );
+
+    // Update the line chart's zoom as it was in the state
+    this.updateLineZoom(this.state.lineTimeframe);
+
+    // Update the line series according to the timeframe
+    this.setState({
+      // Update to the chosen timeframe
+      lineDataDensity: timeframe,
+    });
+  };
 
   // Update to candlestick chart with the chosen timeframe
   updateCandlestickZoom = (timeframe) => {
-    console.log('updateToCandlestickZoom()');
-
-    // Set the state to be the chosen timeframe and candlestick type
-    this.setState({
-      chartDrawingMode: 'candlestick',
-      candlestickTimeframe: timeframe,
-    });
-
-    // Save the data to candlestickData so it won't be recalculated later
+    // Save the timeframe data to candlestickData so it won't be recalculated later
     switch (timeframe) {
       case '1h':
         // Check if the data isn't already calculated
@@ -711,179 +935,170 @@ class Chart extends Component {
 
   // Update candlestick series
   updateCandlestickSeries = (timeframe) => {
-    console.log('updateCandlestickSeries() and candlestickdata: ');
-    console.log(candlestickData);
-
     // Update the chart state with the new data
-    // this.setState({
-    //   // Set the state according to selected timeframe
-    //   candlestickTimeframe: timeframe,
-    //   chartDrawingMode: 'candlestick',
-    //   series: [
-    //     {
-    //       // BTC price data with the timestamp being the close
-    //       // and price being the average of the chosen timeframe
-    //       // [Timestamp, C_Average]
-    //       name: 'BTC price',
-    //       type: 'area',
-    //       data: candlestickData[timeframe][0],
-    //     },
-    //     {
-    //       // [Timestamp, O, H, L, C]
-    //       name: 'Green count',
-    //       type: 'candlestick',
-    //       data: candlestickData[timeframe][1][0],
-    //     },
-    //     {
-    //       // [Timestamp, O, H, L, C]
-    //       name: 'Red/pink count',
-    //       type: 'candlestick',
-    //       data: candlestickData[timeframe][1][1],
-    //     },
-    //   ],
-    // });
+    this.setState({
+      // Set the state according to selected timeframe
+      candlestickTimeframe: timeframe,
+      chartDrawingMode: 'candlestick',
+      series: [
+        {
+          // BTC price data with the timestamp being the close
+          // and price being the average of the chosen timeframe
+          // [Timestamp, C_Average]
+          name: 'BTC price',
+          type: 'area',
+          data: candlestickData[timeframe][0],
+        },
+        {
+          // [Timestamp, O, H, L, C]
+          name: 'Green count close',
+          type: 'candlestick',
+          data: candlestickData[timeframe][1][0],
+        },
+        {
+          // [Timestamp, O, H, L, C]
+          name: 'Red/pink count close',
+          type: 'candlestick',
+          data: candlestickData[timeframe][1][1],
+        },
+      ],
+    });
   };
 
   // Update candlestick options
   updateCandlestickOptions = (timeframe) => {
-    console.log('updateCandlestickOptions()');
-
     // Get the required state variables
-    // let imgCountMax = parseInt(this.state.options.yaxis[1].max);
-    // let imgCountMin = parseInt(this.state.options.yaxis[1].min);
-    // let priceMin = this.state.options.yaxis[0].min;
-    // let priceMax = this.state.options.yaxis[0].max;
-    // let firstDate = parseInt(this.state.options.xaxis.min);
-    // let lastDate = parseInt(this.state.options.xaxis.max);
+    let imgCountMax = parseInt(this.state.options.yaxis[1].max);
+    let imgCountMin = parseInt(this.state.options.yaxis[1].min);
+    let priceMin = this.state.options.yaxis[0].min;
+    let priceMax = this.state.options.yaxis[0].max;
+    let firstDate = parseInt(this.state.options.xaxis.min);
+    let lastDate = parseInt(this.state.options.xaxis.max);
 
-    // // Update the chart state with the new data
-    // this.setState({
-    // chartDrawingMode: 'candlestick',
-    //   options: {
-    // chart: {
-    //   type: 'candlestick',
-    //   height: 350
-    // },
-    // title: {
-    //   text: 'CandleStick Chart',
-    //   align: 'left'
-    // },
-    // xaxis: {
-    //   type: 'datetime'
-    // },
-    // yaxis: {
-    //   tooltip: {
-    //     enabled: true
-    //   }
-    // },
-    //     plotOptions: {
-    //       candlestick: {
-    //         colors: {
-    //           upward: '#008000',
-    //           downward: '#cc0033',
-    //         },
-    //         wick: {
-    //           useFillColor: true,
-    //         },
-    //       },
-    //     },
-    //     title: {
-    //       text: 'Image color averages and BTC price (timezone: GMT+3/UTC+3)',
-    //       style: {
-    //         fontSize: chartTitleFontSize,
-    //       },
-    //       align: 'left',
-    //       offsetX: 0,
-    //     },
-    //     xaxis: {
-    //       // X axis first datapoint date
-    //       min: firstDate,
-    //       // X axis last datapoint date
-    //       max: lastDate,
-    //     },
-    //     yaxis: [
-    //       {
-    //         seriesName: 'BTC price',
-    //         min: priceMin,
-    //         max: priceMax,
-    //         axisTicks: {
-    //           show: true,
-    //         },
-    //         axisBorder: {
-    //           show: true,
-    //           color: '#f2a900',
-    //         },
-    //         labels: {
-    //           style: {
-    //             colors: '#f2a900',
-    //           },
-    //         },
-    //         title: {
-    //           text: 'price $USD',
-    //           style: {
-    //             fontSize: chartSubtitleFontSize,
-    //             color: '#f2a900',
-    //           },
-    //         },
-    //         tooltip: {
-    //           enabled: true,
-    //         },
-    //       },
-    //       {
-    //         seriesName: 'Green count',
-    //         opposite: true,
-    //         min: imgCountMin,
-    //         max: imgCountMax,
-    //         tickAmount: 4,
-    //         axisTicks: {
-    //           show: true,
-    //         },
-    //         axisBorder: {
-    //           show: true,
-    //           color: '#008000',
-    //         },
-    //         labels: {
-    //           style: {
-    //             colors: '#008000',
-    //           },
-    //         },
-    //         title: {
-    //           text: 'Green images count',
-    //           style: {
-    //             fontSize: chartSubtitleFontSize,
-    //             color: '#008000',
-    //           },
-    //         },
-    //       },
-    //       {
-    //         seriesName: 'Red/pink count',
-    //         opposite: true,
-    //         min: imgCountMin,
-    //         max: imgCountMax,
-    //         tickAmount: 4,
-    //         axisTicks: {
-    //           show: true,
-    //         },
-    //         axisBorder: {
-    //           show: true,
-    //           color: '#cc0033',
-    //         },
-    //         labels: {
-    //           style: {
-    //             colors: '#cc0033',
-    //           },
-    //         },
-    //         title: {
-    //           text: 'Red/pink images count',
-    //           style: {
-    //             fontSize: chartSubtitleFontSize,
-    //             color: '#cc0033',
-    //           },
-    //         },
-    //       },
-    //     ],
-    //   },
-    // });
+    // Update the chart state with the new data
+    this.setState({
+      // Update to candlestick drawing mode
+      chartDrawingMode: 'candlestick',
+      // Save the line chart options for reuse later
+      savedLineOptions: [
+        imgCountMax,
+        imgCountMin,
+        priceMin,
+        priceMax,
+        firstDate,
+        lastDate,
+      ],
+      // Set the state to be the chosen timeframe and candlestick type
+      candlestickTimeframe: timeframe,
+      options: {
+        chart: {
+          type: 'candlestick',
+          height: 350,
+        },
+        title: {
+          text: 'Image color averages and BTC price (timezone: GMT+3/UTC+3)',
+          style: {
+            fontSize: chartTitleFontSize,
+          },
+          align: 'left',
+          offsetX: 0,
+        },
+        xaxis: {
+          type: 'datetime',
+          min: firstDate,
+          max: lastDate,
+        },
+        colors: ['#f2a900', '#000080', '#cc0033'],
+        yaxis: [
+          {
+            seriesName: 'BTC price',
+            min: priceMin,
+            max: priceMax,
+            axisTicks: {
+              show: true,
+            },
+            axisBorder: {
+              show: true,
+              color: '#f2a900',
+            },
+            labels: {
+              style: {
+                colors: '#f2a900',
+              },
+            },
+            title: {
+              text: 'price $USD',
+              style: {
+                fontSize: chartSubtitleFontSize,
+                color: '#f2a900',
+              },
+            },
+            tooltip: {
+              enabled: true,
+            },
+          },
+          {
+            seriesName: 'Green count',
+            opposite: true,
+            min: imgCountMin,
+            max: imgCountMax,
+            axisBorder: {
+              show: true,
+              color: '#000080',
+            },
+            labels: {
+              style: {
+                colors: '#000080',
+              },
+            },
+            title: {
+              text: 'Green images count',
+              style: {
+                fontSize: chartSubtitleFontSize,
+                color: '#000080',
+              },
+            },
+          },
+          {
+            seriesName: 'Red/pink count',
+            opposite: true,
+            min: imgCountMin,
+            max: imgCountMax,
+            tickAmount: 4,
+            axisTicks: {
+              show: true,
+            },
+            axisBorder: {
+              show: true,
+              color: '#cc0033',
+            },
+            labels: {
+              style: {
+                colors: '#cc0033',
+              },
+            },
+            title: {
+              text: 'Red/pink images count',
+              style: {
+                fontSize: chartSubtitleFontSize,
+                color: '#cc0033',
+              },
+            },
+          },
+        ],
+        plotOptions: {
+          candlestick: {
+            colors: {
+              upward: '#008000',
+              downward: '#cc0033',
+            },
+            wick: {
+              useFillColor: false,
+            },
+          },
+        },
+      },
+    });
   };
 
   render() {
@@ -906,8 +1121,10 @@ class Chart extends Component {
           />
         ) : (
           <ToolbarLineChart
-            disabled={this.state.lineTimeframe}
+            disabledTimeframe={this.state.lineTimeframe}
+            disabledDataDensity={this.state.lineDataDensity}
             clicked={this.updateLineZoom}
+            changeView={this.updateLineDataDensity}
           />
         )}
         <ApexChart
