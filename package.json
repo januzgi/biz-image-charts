@@ -1,7 +1,20 @@
 {
-  "name": "4chan-scraper",
-  "version": "0.1.0",
+  "name": "biz-image-charts",
+  "description": "4chan /biz/ image data and BTC price chart",
+  "repository": "github:januzgi/biz-image-charts",
+  "version": "1.0.0",
   "private": true,
+  "engines": {
+    "npm": "6.13.4",
+    "node": "v12.16.1"
+  },
+  "contributors": [
+    {
+      "name": "Jani Suoranta",
+      "email": "janisuoranta@icloud.com",
+      "url": "https://github.com/januzgi"
+    }
+  ],
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
