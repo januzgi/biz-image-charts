@@ -22,8 +22,8 @@ const InfoContent = () => {
         <p>
           Using JS and Python as the backend, /biz/ image board is scraped once
           every 5 minutes. With all images of all threads, each image's average
-          color is determined using HSV color ranges. By summing counts of both{' '}
-          <span className={classes.greenLine}>green</span> and{' '}
+          color is determined by using HSV color ranges. By summing counts of
+          both <span className={classes.greenLine}>green</span> and{' '}
           <span className={classes.redLine}>red</span>/
           <span className={classes.pink}>pink</span> images, we draw the chart.
         </p>

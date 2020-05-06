@@ -234,7 +234,9 @@ class Chart extends Component {
 
     // Get the latest price and images data from the server
     axios
-      .get('http://199.247.30.86:8000/results.txt', { timeout: 4000 })
+      .get('https://biz-charts.s3.eu-north-1.amazonaws.com/results.txt', {
+        timeout: 4000,
+      })
       .then((response) => {
         // Put the results into an array, so it becomes an array of strings
         let resultsArray = response.data.split('\n');
